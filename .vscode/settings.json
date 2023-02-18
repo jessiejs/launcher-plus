@@ -5,5 +5,9 @@
   "Lua.runtime.nonstandardSymbol": ["+=", "-=", "*=", "/="],
   "Lua.workspace.library": ["$PLAYDATE_SDK_PATH/CoreLibs"],
   "Lua.workspace.preloadFileSize": 1000,
+  "Lua.diagnostics.enable": false,
+  "markdownlint.config": {
+	"MD010": false
+  },
   "terminal.integrated.defaultProfile.windows": "PowerShell"
 }
