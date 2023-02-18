@@ -12,24 +12,44 @@ import 'constants'
 -- import allocation stuff
 import 'ui-allocation'
 
+-- fix memory leak
+import 'memory-leak-fix'
+
 -- allocator stuff
 local currentAllocationHeight = 0;
 
+-- repaints
+screenNeedsUpdate = true
+
 -- hover stuff
-local hoverIndex = 1
+hoverIndex = 1
 local selectionCount = 1
 
 local selectionLeft = 0.0
 local selectionRight = 0.0
 local selectionTop = 0.0
 local selectionBottom = 0.0
+local selectionRadius = 0.0
+
+local lastSelectionLeft = 0.0
+local lastSelectionRight = 0.0
+local lastSelectionTop = 0.0
+local lastSelectionBottom = 0.0
+local lastSelectionBump = 0.0
+
+local scrollY = 0.0
+local lastScrollY = 0.0
+
+-- states
+stateName = "mainMenu"
+stateData = {}
 
 -- delta time stuff
 local lastFrameTimeForDeltaTimeCalculation = playdate.getCurrentTimeMilliseconds() / 1000
 deltaTime = 0
 
 -- dark mode *duh*
-local useDarkMode = false
+useDarkMode = false
 
 -- system menu
 local menu = pd.getSystemMenu()
@@ -48,6 +68,8 @@ end)
 
 -- a little bit of animation junk
 local selectionBump = 0
+
+playdate.file.mkdir("/Data/LauncherPlus/plugins")
 
 -- add pdx
 function addPdx(path, final)
@@ -71,8 +93,8 @@ function tableContains(tab, val)
 	return false
 end
 
-function openApp()
-	sys.switchToGame(appToOpen)
+function openApp(app)
+	sys.switchToGame(app)
 end
 
 function returnToMainMenu()
@@ -84,15 +106,9 @@ function confirm(text, yes, no)
 end
 
 function mainMenu()
-	simpleButton("toggle dark mode",function() 
-		useDarkMode = not useDarkMode
-	end);
-	simpleButton("wooo2",function() 
-		print(2)
-	end);
-	simpleButton("wooo3",function() 
-		print(3)
-	end);
+	for i, plugin in pairs(plugins) do
+		plugin.uiHandler(stateName,stateData)
+	end
 end
 
 function playdate.update()
@@ -107,14 +123,49 @@ function playdate.update()
 		selectionBump = -10
 		snd.playSystemSound(snd.kSoundSelectPrevious)
 	end
-	
+
+	playdate.AButtonDown = nil
+	playdate.BButtonDown = nil
+	playdate.leftButtonDown = nil
+	playdate.rightButtonDown = nil	
+
 	currentAllocationHeight = EDGE_PADDING
 	currentTime = playdate.getCurrentTimeMilliseconds() / 1000
 	deltaTime = currentTime - lastFrameTimeForDeltaTimeCalculation
 	lastFrameTimeForDeltaTimeCalculation = currentTime
 	selectionCount = 0
+
+	ticks = playdate.getCrankTicks(6)
+
+	if ticks > 0 then
+		playdate.downButtonDown()
+	end
+
+	if ticks < 0 then
+		playdate.upButtonDown()
+	end
+
+	if screenNeedsUpdate then
+		screenNeedsUpdate = false
+	else
+		compositeLeft = math.min(selectionLeft,lastSelectionLeft)
+		compositeTop = math.min(selectionTop+selectionBump,lastSelectionTop+lastSelectionBump)
+		compositeRight = math.max(selectionRight,lastSelectionRight)
+		compositeBottom = math.max(selectionBottom+selectionBump,lastSelectionBottom+lastSelectionBump)
+
+		playdate.graphics.setClipRect(compositeLeft - 10, compositeTop + selectionBump - 10, compositeRight - compositeLeft + 20,
+		compositeBottom - compositeTop + 20)
+
+		lastSelectionBottom = selectionBottom
+		lastSelectionLeft = selectionLeft
+		lastSelectionRight = selectionRight
+		lastSelectionTop = selectionTop
+		lastSelectionBump = selectionBump
+	end
+
 	playdate.graphics.clear()
 	playdate.graphics.setColor(playdate.graphics.kColorBlack)
+
 	mainMenu()
 	if hoverIndex < 1 then
 		hoverIndex = 1
@@ -127,15 +178,36 @@ function playdate.update()
 	selectionBump *= 1 - (deltaTime * 5)
 	playdate.graphics.setColor(playdate.graphics.kColorXOR)
 	playdate.graphics.fillRoundRect(selectionLeft, selectionTop + selectionBump, selectionRight - selectionLeft,
-		selectionBottom - selectionTop, 5)
+		selectionBottom - selectionTop, selectionRadius)
+end
+
+function addText(text,font) 
+	if font == nil then
+		font = fontBold
+	end
+	local width, height = playdate.graphics.getTextSizeForMaxWidth(text, SCREEN_WIDTH - EDGE_PADDING - EDGE_PADDING, 0, font);
+	local allocation = allocate(height)
+	playdate.graphics.drawTextInRect(text,allocation:rect().left,allocation:rect().top,allocation:rect():width(),allocation:rect():height(),0,"",kTextAlignment.left,font)
 end
 
 function simpleButton(text,action) 
-	allocation = allocate(35);
+	allocation = allocate(BUTTON_HEIGHT);
 	selection(allocation:rect(), {
 		select = action
 	});
-	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left+9,allocation:rect().top+9)
+	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left,allocation:rect().top+9)
+end
+
+function header(text) 
+	if currentAllocationHeight == EDGE_PADDING then
+		currentAllocationHeight = 0
+	end
+	allocation = allocate(BUTTON_HEIGHT);
+	playdate.graphics.setColor(playdate.graphics.kColorBlack)
+	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left,allocation:rect().top+9)
+	playdate.graphics.setColor(playdate.graphics.kColorXOR)
+	playdate.graphics.fillRect(0,allocation.top,SCREEN_WIDTH,allocation.height);
+	playdate.graphics.setColor(playdate.graphics.kColorBlack)
 end
 
 function allocate(height)
@@ -143,20 +215,25 @@ function allocate(height)
 		top = currentAllocationHeight,
 		height = height
 	})
-	currentAllocationHeight = currentAllocationHeight + height
+	currentAllocationHeight = currentAllocationHeight + height + SMALL_GAP
 	return allocation
 end
 
-function selection(rect,actions)
+function selection(rect,actions,cornerRadius)
 	if actions == nil then
 		actions = {}
+	end
+	if cornerRadius == nil then
+		cornerRadius = 5
 	end
 	selectionCount = selectionCount + 1
 	if selectionCount == hoverIndex then
 		selectionTop = playdate.math.lerp(selectionTop, rect.top, deltaTime * 10);
 		selectionBottom = playdate.math.lerp(selectionBottom, rect.bottom, deltaTime * 10);
-		selectionLeft = playdate.math.lerp(selectionLeft, rect.left, deltaTime * 10);
-		selectionRight = playdate.math.lerp(selectionRight, rect.right, deltaTime * 10);
+		selectionLeft = playdate.math.lerp(selectionLeft, rect.left-10, deltaTime * 10);
+		selectionRight = playdate.math.lerp(selectionRight, rect.right+10, deltaTime * 10);
+		selectionRadius = playdate.math.lerp(selectionRadius, cornerRadius, deltaTime * 10);
+
 		if actions.select ~= nil then
 			playdate.AButtonDown = actions.select
 		end
@@ -176,8 +253,30 @@ function selection(rect,actions)
 			playdate.rightButtonDown = actions.right
 		end
 	end
+	scrollY = -selectionBottom + SCREEN_HEIGHT - EDGE_PADDING
+	if scrollY > 0 then
+		scrollY = 0
+	end
+	gfx.setDrawOffset(0,scrollY)
+
+	if lastScrollY ~= scrollY then
+		lastScrollY = scrollY
+		screenNeedsUpdate = true
+	end
 end
 
 function updateOffset()
 	--gfx.setDrawOffset(20 + accelerometerX * 2 + shakeX, 20 + h - scrollY + accelerometerY * 2 + shakeY)
+end
+
+-- add plugins
+import 'plugins'
+
+Plugin("./plugins/games"):register()
+Plugin("./plugins/settings"):register()
+
+local plugins = playdate.file.listFiles("/Data/LauncherPlus/plugins")
+
+for index, name in pairs(plugins) do
+	Plugin("/Data/LauncherPlus/plugins/".. name):register()
 end

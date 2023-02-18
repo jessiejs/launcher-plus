@@ -23,3 +23,11 @@ function UIRect:init(config)
 	self.left = config.left;
 	self.right = config.right;
 end
+
+function UIRect:width() 
+	return self.right - self.left
+end
+
+function UIRect:height() 
+	return self.bottom - self.top
+end
