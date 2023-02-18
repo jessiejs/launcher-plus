@@ -61,7 +61,7 @@ function uiHandler(name, state)
 
 		header("Sadness")
 
-		text("meier :(")
+		text("im still not over him :'(")
 
 		button("home", function ()
 			switchState("mainMenu",{})
