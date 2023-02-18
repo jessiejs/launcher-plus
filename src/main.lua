@@ -148,13 +148,12 @@ function playdate.update()
 	if screenNeedsUpdate then
 		screenNeedsUpdate = false
 	else
-		compositeLeft = math.min(selectionLeft,lastSelectionLeft)
-		compositeTop = math.min(selectionTop+selectionBump,lastSelectionTop+lastSelectionBump)
-		compositeRight = math.max(selectionRight,lastSelectionRight)
-		compositeBottom = math.max(selectionBottom+selectionBump,lastSelectionBottom+lastSelectionBump)
+		compositeLeft = math.min(selectionLeft,lastSelectionLeft) - math.abs(selectionBump*2)
+		compositeTop = math.min(selectionTop+selectionBump,lastSelectionTop+lastSelectionBump) - math.abs(selectionBump*2)
+		compositeRight = math.max(selectionRight,lastSelectionRight) + math.abs(selectionBump*2)
+		compositeBottom = math.max(selectionBottom+selectionBump,lastSelectionBottom+lastSelectionBump) + math.abs(selectionBump*2)
 
-		playdate.graphics.setClipRect(compositeLeft - 10, compositeTop + selectionBump - 10, compositeRight - compositeLeft + 20,
-		compositeBottom - compositeTop + 20)
+		playdate.graphics.setClipRect(compositeLeft, compositeTop + selectionBump, compositeRight - compositeLeft, compositeBottom - compositeTop)
 
 		lastSelectionBottom = selectionBottom
 		lastSelectionLeft = selectionLeft
