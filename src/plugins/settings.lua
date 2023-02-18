@@ -1,8 +1,9 @@
-local button = behavior("addButton")
-local header = behavior("addHeader")
-local darkMode = behavior("getDarkModeManager")
-local text = behavior("addText")
-local switchState = behavior("switchState")
+local button = behaviour("addButton")
+local header = behaviour("addHeader")
+local darkMode = behaviour("getDarkModeManager")
+local text = behaviour("addText")
+local switchState = behaviour("switchState")
+local tickbox = behaviour("addTickbox")
 
 function uiHandler(name, state)
 	if name == "settings" then
@@ -12,25 +13,31 @@ function uiHandler(name, state)
 
 		if header == nil then
 			text(
-				"The settings plugin depends upon the Launcher+ behavior header, which is not available, rendering has been canceled")
+				"The settings plugin depends upon the Launcher+ behaviour addHeader, which is not available, rendering has been canceled")
 			return
 		end
 
 		if button == nil then
 			text(
-				"The settings plugin depends upon the Launcher+ behavior button, which is not available, rendering has been canceled")
+				"The settings plugin depends upon the Launcher+ behaviour addButton, which is not available, rendering has been canceled")
 			return
 		end
 
 		if darkMode == nil then
 			text(
-				"The settings plugin depends upon the Launcher+ behavior getDarkModeManager, which is not available, rendering has been canceled")
+				"The settings plugin depends upon the Launcher+ behaviour getDarkModeManager, which is not available, rendering has been canceled")
 			return
 		end
 
 		if switchState == nil then
 			text(
-				"The settings plugin depends upon the Launcher+ behavior switchState, which is not available, rendering has been canceled")
+				"The settings plugin depends upon the Launcher+ behaviour switchState, which is not available, rendering has been canceled")
+			return
+		end
+
+		if tickbox == nil then
+			text(
+				"The settings plugin depends upon the Launcher+ behaviour addTickbox, which is not available, rendering has been canceled")
 			return
 		end
 
@@ -43,15 +50,7 @@ function uiHandler(name, state)
 
 		header("Settings")
 
-		local tickIcon = " ";
-
-		if darkModeManager.getDarkModeEnabled() then
-			tickIcon = "X"
-		end
-
-		button("[" .. tickIcon .. "] toggle dark mode", function()
-			darkModeManager.setDarkMode(not darkModeManager.getDarkModeEnabled())
-		end);
+		tickbox("dark mode", darkModeManager.getDarkModeEnabled, darkModeManager.setDarkMode);
 
 		button("home", function ()
 			switchState("mainMenu",{})
@@ -64,19 +63,19 @@ function uiHandler(name, state)
 
 		if header == nil then
 			text(
-				"The settings plugin depends upon the Launcher+ behavior header, which is not available, rendering has been canceled")
+				"The settings plugin depends upon the Launcher+ behaviour addHeader, which is not available, rendering has been canceled")
 			return
 		end
 
 		if button == nil then
 			text(
-				"The settings plugin depends upon the Launcher+ behavior button, which is not available, rendering has been canceled")
+				"The settings plugin depends upon the Launcher+ behaviour addButton, which is not available, rendering has been canceled")
 			return
 		end
 
 		if switchState == nil then
 			text(
-				"The settings plugin depends upon the Launcher+ behavior switchState, which is not available, rendering has been canceled")
+				"The settings plugin depends upon the Launcher+ behaviour switchState, which is not available, rendering has been canceled")
 			return
 		end
 

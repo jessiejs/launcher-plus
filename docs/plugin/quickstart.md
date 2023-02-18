@@ -23,9 +23,9 @@ You can expect a behaviour to always behave in the same way.
 We need to add a few behaviours to our plugin.
 
 ```lua
-local button = behavior("addButton")
-local header = behavior("addHeader")
-local text = behavior("addText")
+local button = behaviour("addButton")
+local header = behaviour("addHeader")
+local text = behaviour("addText")
 
 function uiHandler(name,state)
 
@@ -35,9 +35,9 @@ end
 But the behaviours may have been removed in the latest version, so we need some error text!
 
 ```lua
-local button = behavior("addButton")
-local header = behavior("addHeader")
-local text = behavior("addText")
+local button = behaviour("addButton")
+local header = behaviour("addHeader")
+local text = behaviour("addText")
 
 function uiHandler(name,state)
 	--make sure we're in the main menu
@@ -48,12 +48,12 @@ function uiHandler(name,state)
 		end
 		if header == nil then
 			-- tell the user about the error
-			text("The example plugin depends upon the Launcher+ behavior header, which is not available, rendering has been canceled")
+			text("The example plugin depends upon the Launcher+ behaviour header, which is not available, rendering has been canceled")
 			return
 		end
 		if button == nil then
 			-- again, tell user about error
-			text("The example plugin depends upon the Launcher+ behavior button, which is not available, rendering has been canceled")
+			text("The example plugin depends upon the Launcher+ behaviour button, which is not available, rendering has been canceled")
 			return
 		end
 	end
@@ -67,9 +67,9 @@ UI in Launcher+ is expressed declaratively, that means you don't have to initial
 Let's add some basic UI
 
 ```lua
-local button = behavior("addButton")
-local header = behavior("addHeader")
-local text = behavior("addText")
+local button = behaviour("addButton")
+local header = behaviour("addHeader")
+local text = behaviour("addText")
 
 function uiHandler(name,state)
 	--make sure we're in the main menu
@@ -80,12 +80,12 @@ function uiHandler(name,state)
 		end
 		if header == nil then
 			-- tell the user about the error
-			text("The example plugin depends upon the Launcher+ behavior header, which is not available, rendering has been canceled")
+			text("The example plugin depends upon the Launcher+ behaviour header, which is not available, rendering has been canceled")
 			return
 		end
 		if button == nil then
 			-- again, tell user about error
-			text("The example plugin depends upon the Launcher+ behavior button, which is not available, rendering has been canceled")
+			text("The example plugin depends upon the Launcher+ behaviour button, which is not available, rendering has been canceled")
 			return
 		end
 
@@ -98,11 +98,11 @@ end
 Now for some interactivity! Let's add a button that enables dark mode, like the one in settings.
 
 ```lua
-local button = behavior("addButton")
-local header = behavior("addHeader")
-local text = behavior("addText")
+local button = behaviour("addButton")
+local header = behaviour("addHeader")
+local text = behaviour("addText")
 --DARK MODE
-local darkMode = behavior("getDarkModeManager")
+local darkMode = behaviour("getDarkModeManager")
 
 function uiHandler(name,state)
 	--make sure we're in the main menu
@@ -113,17 +113,17 @@ function uiHandler(name,state)
 		end
 		if header == nil then
 			-- tell the user about the error
-			text("The example plugin depends upon the Launcher+ behavior header, which is not available, rendering has been canceled")
+			text("The example plugin depends upon the Launcher+ behaviour header, which is not available, rendering has been canceled")
 			return
 		end
 		if button == nil then
 			-- again, tell user about error
-			text("The example plugin depends upon the Launcher+ behavior button, which is not available, rendering has been canceled")
+			text("The example plugin depends upon the Launcher+ behaviour button, which is not available, rendering has been canceled")
 			return
 		end
 		if darkMode == nil then
 			-- again, tell user about error
-			text("The example plugin depends upon the Launcher+ behavior getDarkModeManager, which is not available, rendering has been canceled")
+			text("The example plugin depends upon the Launcher+ behaviour getDarkModeManager, which is not available, rendering has been canceled")
 			return
 		end
 

@@ -1,11 +1,12 @@
 import 'constants'
 import 'darkModeManager'
 
-behaviors = {
+behaviours = {
 	getGameList=function ()
 		return GAMELIST		
 	end,
 	addButton=simpleButton,
+	addTickbox=simpleTickbox,
 	tableContains=tableContains,
 	addText=addText,
 	addHeader=header,
@@ -23,5 +24,9 @@ behaviors = {
 	end,
 	forceScreenUpdate=function ()
 		screenNeedsUpdate = true
-	end
+	end,
+	getGraphics=function ()
+		return playdate.graphics
+	end,
+	reboot=playdate.reboot
 };

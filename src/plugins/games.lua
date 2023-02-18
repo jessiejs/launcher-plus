@@ -1,8 +1,8 @@
-local button = behavior("addButton")
-local gameListGetter = behavior("getGameList")
-local openApp = behavior("openApp")
-local header = behavior("addHeader")
-local text = behavior("addText")
+local button = behaviour("addButton")
+local gameListGetter = behaviour("getGameList")
+local openApp = behaviour("openApp")
+local header = behaviour("addHeader")
+local text = behaviour("addText")
 
 function uiHandler(name,state) 
 	if name == "mainMenu" then
@@ -11,22 +11,22 @@ function uiHandler(name,state)
 		end
 
 		if gameListGetter == nil then
-			text("The game list plugin depends upon the Launcher+ behavior getGameList, which is not available, rendering has been canceled")
+			text("The game list plugin depends upon the Launcher+ behaviour getGameList, which is not available, rendering has been canceled")
 			return
 		end
 
 		if openApp == nil then
-			text("The game list plugin depends upon the Launcher+ behavior openApp, which is not available, rendering has been canceled")
+			text("The game list plugin depends upon the Launcher+ behaviour openApp, which is not available, rendering has been canceled")
 			return
 		end
 
 		if header == nil then
-			text("The game list plugin depends upon the Launcher+ behavior header, which is not available, rendering has been canceled")
+			text("The game list plugin depends upon the Launcher+ behaviour header, which is not available, rendering has been canceled")
 			return
 		end
 
 		if button == nil then
-			text("The game list plugin depends upon the Launcher+ behavior button, which is not available, rendering has been canceled")
+			text("The game list plugin depends upon the Launcher+ behaviour button, which is not available, rendering has been canceled")
 			return
 		end
 

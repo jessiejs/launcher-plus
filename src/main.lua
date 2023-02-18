@@ -21,6 +21,9 @@ local currentAllocationHeight = 0;
 -- repaints
 screenNeedsUpdate = true
 
+--fun junk
+--playdate.system.showSystemDialog("testetst","is this ever used, or is this api just here for no reason?")
+
 -- hover stuff
 hoverIndex = 1
 local selectionCount = 1
@@ -51,9 +54,6 @@ deltaTime = 0
 -- dark mode *duh*
 useDarkMode = false
 
--- system menu
-local menu = pd.getSystemMenu()
-
 -- confirm state
 local confirmText, confirmYesFunction, confirmNoFunction
 local confirmA, confirmB
@@ -61,10 +61,6 @@ local confirmA, confirmB
 -- uncap refresh rate
 pd.display.setRefreshRate(0)
 
--- add dark mode toggle
-menu:addCheckmarkMenuItem("Dark Mode", false, function(value)
-	useDarkMode = value
-end)
 
 -- a little bit of animation junk
 local selectionBump = 0
@@ -189,12 +185,32 @@ function addText(text,font)
 	playdate.graphics.drawTextInRect(text,allocation:rect().left,allocation:rect().top,allocation:rect():width(),allocation:rect():height(),0,"",kTextAlignment.left,font)
 end
 
-function simpleButton(text,action) 
+function simpleButton(text,action,customActions) 
+	allocation = allocate(BUTTON_HEIGHT);
+	if customActions == nil then
+		customActions = {
+		}
+	end
+	customActions.select = action
+	selection(allocation:rect(), customActions);
+	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left,allocation:rect().top+9)
+end
+
+function simpleTickbox(text,get,set) 
+	value = get()
 	allocation = allocate(BUTTON_HEIGHT);
 	selection(allocation:rect(), {
-		select = action
+		select = function ()
+			set(not value)
+		end
 	});
-	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left,allocation:rect().top+9)
+	tickSize = BUTTON_HEIGHT - 10
+	tickMargin = 5
+	playdate.graphics.fillRoundRect(allocation:rect().left, allocation:rect().top + tickMargin,tickSize,tickSize,2)
+	if value then
+		tickboxTexture:draw(allocation:rect().left, allocation:rect().top + tickMargin)
+	end
+	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left + tickSize + tickMargin + tickMargin,allocation:rect().top+9)
 end
 
 function header(text) 
@@ -234,7 +250,10 @@ function selection(rect,actions,cornerRadius)
 		selectionRadius = playdate.math.lerp(selectionRadius, cornerRadius, deltaTime * 10);
 
 		if actions.select ~= nil then
-			playdate.AButtonDown = actions.select
+			playdate.AButtonDown = function ()
+				snd.playSystemSound(snd.kSoundAction)
+				actions.select()
+			end
 		end
 		if actions.cancel ~= nil then
 			playdate.BButtonDown = actions.cancel
@@ -273,6 +292,7 @@ import 'plugins'
 
 Plugin("./plugins/games"):register()
 Plugin("./plugins/settings"):register()
+Plugin("./plugins/system"):register()
 
 local plugins = playdate.file.listFiles("/Data/LauncherPlus/plugins")
 

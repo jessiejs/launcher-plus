@@ -1,4 +1,4 @@
-import 'behaviors'
+import 'behaviours'
 
 plugins = {}
 
@@ -7,10 +7,16 @@ class("Plugin").extends()
 function Plugin:init(path)
 	local pluginNamespace = {
 		behavior=function(name)
-			return behaviors[name]
+			return behaviours[name]
 		end,
 		hasBehavior=function(name)
-			return behaviors[name] ~= nil
+			return behaviours[name] ~= nil
+		end,
+		behaviour=function(name)
+			return behaviours[name]
+		end,
+		hasBehaviour=function(name)
+			return behaviours[name] ~= nil
 		end
 	}
 

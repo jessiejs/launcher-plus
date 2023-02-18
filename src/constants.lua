@@ -12,4 +12,5 @@ SCREEN_WIDTH = playdate.display.getWidth()
 SCREEN_HEIGHT = playdate.display.getHeight()
 BUTTON_HEIGHT = 33
 SMALL_GAP = 5
-GAMELIST = playdate.system.getGameList()
+GAMELIST = playdate.system.getInstalledGameList()
+tickboxTexture = playdate.graphics.image.new("assets/tickbox")
