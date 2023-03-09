@@ -28,5 +28,12 @@ behaviours = {
 	getGraphics=function ()
 		return playdate.graphics
 	end,
-	reboot=playdate.reboot
+	reboot=playdate.reboot,
+	sysGetMetadata=playdate.system.getMetadata,
+	takeOverTicks=function (tick)
+		playdate.update = tick
+	end,
+	switchToMainUpdate=function ()
+		playdate.update = mainUpdate
+	end
 };

@@ -1,3 +1,13 @@
+if playdate.system == nil then
+	playdate.graphics.clear()
+	playdate.graphics.drawText("Launcher+ failed to launch\n\nplaydate.system is inaccessible\nPlease install Launcher+ to /System/, not /Games/",0,0,playdate.graphics.getSystemFont("bold"));
+	playdate.display.flush()
+	playdate.update = function ()
+		
+	end
+	return
+end
+
 -- import corelibs
 import "CoreLibs/object"
 import "CoreLibs/graphics"
@@ -21,6 +31,13 @@ local currentAllocationHeight = 0;
 -- repaints
 screenNeedsUpdate = true
 
+-- catalog ost
+local catalogMusic = snd.fileplayer.new("/System/Catalog.pdx/sounds/background-music.pda")
+
+if catalogMusic ~= nil then
+	catalogMusic:play(0)
+end
+
 --fun junk
 --playdate.system.showSystemDialog("testetst","is this ever used, or is this api just here for no reason?")
 
@@ -42,6 +59,9 @@ local lastSelectionBump = 0.0
 
 local scrollY = 0.0
 local lastScrollY = 0.0
+
+local bPaint = 100
+
 
 -- states
 stateName = "mainMenu"
@@ -66,6 +86,16 @@ pd.display.setRefreshRate(0)
 local selectionBump = 0
 
 playdate.file.mkdir("/Data/LauncherPlus/plugins")
+
+function lerp(a,b,t)
+	if t < 0 then
+		return a
+	end
+	if t > 1 then
+		return b
+	end
+	return playdate.math.lerp(a,b,t)
+end
 
 -- add pdx
 function addPdx(path, final)
@@ -107,7 +137,7 @@ function mainMenu()
 	end
 end
 
-function playdate.update()
+function mainUpdate() 	
 	playdate.display.setInverted(useDarkMode)
 	playdate.downButtonDown = function ()
 		hoverIndex = hoverIndex + 1
@@ -139,6 +169,12 @@ function playdate.update()
 
 	if ticks < 0 then
 		playdate.upButtonDown()
+	end
+
+	if bPaint > 0 then
+		bPaint -= 1
+		print("b(oot)painting (" .. tostring(100 - bPaint) .. ")")
+		screenNeedsUpdate = true
 	end
 
 	if screenNeedsUpdate then
@@ -176,41 +212,50 @@ function playdate.update()
 		selectionBottom - selectionTop, selectionRadius)
 end
 
+playdate.update = mainUpdate
+
 function addText(text,font) 
 	if font == nil then
 		font = fontBold
 	end
 	local width, height = playdate.graphics.getTextSizeForMaxWidth(text, SCREEN_WIDTH - EDGE_PADDING - EDGE_PADDING, 0, font);
 	local allocation = allocate(height)
-	playdate.graphics.drawTextInRect(text,allocation:rect().left,allocation:rect().top,allocation:rect():width(),allocation:rect():height(),0,"",kTextAlignment.left,font)
+	playdate.graphics.drawTextInRect(text,allocation:rect().left,allocation:rect().top,allocation:rect().width,allocation:rect().height,0,"",kTextAlignment.left,font)
 end
 
 function simpleButton(text,action,customActions) 
 	allocation = allocate(BUTTON_HEIGHT);
+	local y = allocation.top + scrollY
 	if customActions == nil then
 		customActions = {
 		}
 	end
 	customActions.select = action
-	selection(allocation:rect(), customActions);
-	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left,allocation:rect().top+9)
+	selectionGetter(function ()
+		return allocation:rect()
+	end, customActions);
+	if y > -BUTTON_HEIGHT and y < SCREEN_HEIGHT then
+		local rect = allocation:rect()
+		playdate.graphics.drawText("*" .. text .. "*",rect.left,rect.top+9)
+	end
 end
 
 function simpleTickbox(text,get,set) 
 	value = get()
 	allocation = allocate(BUTTON_HEIGHT);
-	selection(allocation:rect(), {
+	rect = allocation:rect()
+	selection(rect, {
 		select = function ()
 			set(not value)
 		end
 	});
 	tickSize = BUTTON_HEIGHT - 10
 	tickMargin = 5
-	playdate.graphics.fillRoundRect(allocation:rect().left, allocation:rect().top + tickMargin,tickSize,tickSize,2)
+	playdate.graphics.fillRoundRect(rect.left, rect.top + tickMargin,tickSize,tickSize,2)
 	if value then
-		tickboxTexture:draw(allocation:rect().left, allocation:rect().top + tickMargin)
+		tickboxTexture:draw(rect.left, rect.top + tickMargin)
 	end
-	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left + tickSize + tickMargin + tickMargin,allocation:rect().top+9)
+	playdate.graphics.drawText("*" .. text .. "*",rect.left + tickSize + tickMargin + tickMargin,rect.top+9)
 end
 
 function header(text) 
@@ -218,23 +263,55 @@ function header(text)
 		currentAllocationHeight = 0
 	end
 	allocation = allocate(BUTTON_HEIGHT);
+	rect = allocation:rect()
 	playdate.graphics.setColor(playdate.graphics.kColorBlack)
-	playdate.graphics.drawText("*" .. text .. "*",allocation:rect().left,allocation:rect().top+9)
+	playdate.graphics.drawText("*" .. text .. "*",rect.left,rect.top+9)
 	playdate.graphics.setColor(playdate.graphics.kColorXOR)
 	playdate.graphics.fillRect(0,allocation.top,SCREEN_WIDTH,allocation.height);
 	playdate.graphics.setColor(playdate.graphics.kColorBlack)
+	indentation = 0
+	--[[while indentation < BUTTON_HEIGHT / 2 do
+		playdate.graphics.setColor(playdate.graphics.kColorWhite)
+		playdate.graphics.fillRect(indentation,allocation.top+indentation,1,allocation.height-indentation-indentation);
+		playdate.graphics.fillRect(SCREEN_WIDTH-indentation,allocation.top+indentation,1,allocation.height-indentation-indentation);
+		indentation += 1
+	end]]
 end
 
 function allocate(height)
-	local allocation = Allocation({
+	-- allocate has to be heavily optimized, so this is going to be quite confusing
+	local allocation = {
 		top = currentAllocationHeight,
-		height = height
-	})
+		height = height,
+		rect = function (slf)
+			return {
+				top=slf.top,
+				bottom=slf.top+slf.height,
+				left=EDGE_PADDING,
+				right=SCREEN_WIDTH-EDGE_PADDING,
+				width=SCREEN_WIDTH-EDGE_PADDING-EDGE_PADDING,
+				height=slf.height
+			}
+		end
+	}
 	currentAllocationHeight = currentAllocationHeight + height + SMALL_GAP
+
+	scrollY = -selectionBottom + SCREEN_HEIGHT - (EDGE_PADDING-10)
+	if scrollY > 0 then
+		scrollY = 0
+	end
+	gfx.setDrawOffset(0,scrollY)
+
 	return allocation
 end
 
 function selection(rect,actions,cornerRadius)
+	selectionGetter(function ()
+		return rect
+	end,actions,cornerRadius)
+end
+
+function selectionGetter(rct,actions,cornerRadius)
 	if actions == nil then
 		actions = {}
 	end
@@ -243,11 +320,12 @@ function selection(rect,actions,cornerRadius)
 	end
 	selectionCount = selectionCount + 1
 	if selectionCount == hoverIndex then
-		selectionTop = playdate.math.lerp(selectionTop, rect.top, deltaTime * 10);
-		selectionBottom = playdate.math.lerp(selectionBottom, rect.bottom, deltaTime * 10);
-		selectionLeft = playdate.math.lerp(selectionLeft, rect.left-10, deltaTime * 10);
-		selectionRight = playdate.math.lerp(selectionRight, rect.right+10, deltaTime * 10);
-		selectionRadius = playdate.math.lerp(selectionRadius, cornerRadius, deltaTime * 10);
+		local rect = rct()
+		selectionTop = lerp(selectionTop, rect.top, deltaTime * 10);
+		selectionBottom = lerp(selectionBottom, rect.bottom, deltaTime * 10);
+		selectionLeft = lerp(selectionLeft, rect.left-10, deltaTime * 10);
+		selectionRight = lerp(selectionRight, rect.right+10, deltaTime * 10);
+		selectionRadius = lerp(selectionRadius, cornerRadius, deltaTime * 10);
 
 		if actions.select ~= nil then
 			playdate.AButtonDown = function ()
@@ -271,12 +349,6 @@ function selection(rect,actions,cornerRadius)
 			playdate.rightButtonDown = actions.right
 		end
 	end
-	scrollY = -selectionBottom + SCREEN_HEIGHT - EDGE_PADDING
-	if scrollY > 0 then
-		scrollY = 0
-	end
-	gfx.setDrawOffset(0,scrollY)
-
 	if lastScrollY ~= scrollY then
 		lastScrollY = scrollY
 		screenNeedsUpdate = true

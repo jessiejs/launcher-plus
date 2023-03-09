@@ -20,10 +20,11 @@ function Allocation:init(config)
 end
 
 function Allocation:rect() 
-	return UIRect({
+	-- UIRect:init runs hot so we just don't do it :)
+	return {
 		top=self.top,
 		bottom=self.top+self.height,
 		left=EDGE_PADDING,
 		right=SCREEN_WIDTH-EDGE_PADDING
-	})
+	}
 end

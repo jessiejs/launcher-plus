@@ -1,0 +1,3 @@
+# Reboot
+
+Reboots the device.

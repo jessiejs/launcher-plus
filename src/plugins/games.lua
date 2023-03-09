@@ -3,6 +3,7 @@ local gameListGetter = behaviour("getGameList")
 local openApp = behaviour("openApp")
 local header = behaviour("addHeader")
 local text = behaviour("addText")
+local getMetadata = behaviour("sysGetMetadata")
 
 function uiHandler(name,state) 
 	if name == "mainMenu" then
@@ -30,11 +31,20 @@ function uiHandler(name,state)
 			return
 		end
 
+		if getMetadata == nil then
+			text("The game list plugin depends upon the Launcher+ behaviour sysGetMetadata, which is not available, rendering has been canceled")
+			return
+		end
+
 		for i, category in pairs(gameListGetter()) do
 			header(category.name)
 			for x, game in pairs(category) do
 				if game.getTitle ~= nil then
 					button(game:getTitle(),function() 
+						local metadata = getMetadata(game:getPath() .. "/pdxinfo")
+						print(metadata.contentWarning)
+						print(metadata.contentWarning2)
+						printTable(metadata)
 						openApp(game:getPath())
 					end);
 				end

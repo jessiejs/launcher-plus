@@ -1,5 +1,5 @@
 name=Launcher Plus
 author=Jessie
 description=A super simple launcher
-bundleID=com.jessie.launcherPlus
+bundleID=com.panic.launcher
 imagePath=system/card.png
