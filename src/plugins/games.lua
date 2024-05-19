@@ -41,12 +41,8 @@ function uiHandler(name,state)
 			for x, game in pairs(category) do
 				if game.getTitle ~= nil then
 					button(game:getTitle(),function() 
-						local metadata = getMetadata(game:getPath() .. "/pdxinfo")
-						print(metadata.contentWarning)
-						print(metadata.contentWarning2)
-						printTable(metadata)
 						openApp(game:getPath())
-					end);
+					end); 
 				end
 			end
 		end

@@ -6,5 +6,7 @@ function DarkModeManager:init()
 	end
 	self.setDarkMode = function (darkMode) 
 		useDarkMode = darkMode
+		settings.useDarkMode = darkMode
+		saveSettings()
 	end
 end

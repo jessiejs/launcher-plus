@@ -25,6 +25,9 @@ import 'ui-allocation'
 -- fix memory leak
 import 'memory-leak-fix'
 
+-- bash
+import 'prompt'
+
 -- allocator stuff
 local currentAllocationHeight = 0;
 
@@ -32,10 +35,18 @@ local currentAllocationHeight = 0;
 screenNeedsUpdate = true
 
 -- catalog ost
+--[[
 local catalogMusic = snd.fileplayer.new("/System/Catalog.pdx/sounds/background-music.pda")
 
 if catalogMusic ~= nil then
 	catalogMusic:play(0)
+end
+]]
+
+local catalogSound = snd.sampleplayer.new("/System/Catalog.pdx/sounds/purchase-success.pda")
+
+if catalogSound ~= nil then
+	--catalogSound:play()
 end
 
 --fun junk
@@ -43,6 +54,57 @@ end
 
 -- hover stuff
 hoverIndex = 1
+
+--input junk
+actionAHandler = nil
+actionBHandler = nil
+actionUpHandler = nil
+actionDownHandler = nil
+actionLeftHandler = nil
+actionRightHandler = nil
+queuedTask = nil
+
+playdate.AButtonDown = function ()
+	if actionAHandler ~= nil then
+		queuedTask = actionAHandler
+	end
+end
+
+
+playdate.BButtonDown = function ()
+	if actionBHandler ~= nil then
+		queuedTask = actionBHandler
+	end
+end
+
+
+playdate.upButtonDown = function ()
+	if actionUpHandler ~= nil then
+		queuedTask = actionUpHandler
+	end
+end
+
+
+playdate.downButtonDown = function ()
+	if actionDownHandler ~= nil then
+		queuedTask = actionDownHandler
+	end
+end
+
+
+playdate.leftButtonDown = function ()
+	if actionLeftHandler ~= nil then
+		queuedTask = actionLeftHandler
+	end
+end
+
+
+playdate.rightButtonDown = function ()
+	if actionRightHandler ~= nil then
+		queuedTask = actionRightHandler
+	end
+end
+
 local selectionCount = 1
 
 local selectionLeft = 0.0
@@ -86,6 +148,28 @@ pd.display.setRefreshRate(0)
 local selectionBump = 0
 
 playdate.file.mkdir("/Data/LauncherPlus/plugins")
+
+-- open config file
+settings = playdate.datastore.read("/Data/LauncherPlus/settings")
+
+if settings == nil then
+	settings = {
+		permissions = {
+			dontTreatThisAsAnArray={
+				youmoron=true
+			}
+		},
+		useDarkMode = false
+	}
+end
+
+useDarkMode = settings.useDarkMode
+
+function saveSettings() 
+	playdate.datastore.write(settings,"/Data/LauncherPlus/settings")
+end
+
+saveSettings()
 
 function lerp(a,b,t)
 	if t < 0 then
@@ -132,28 +216,44 @@ function confirm(text, yes, no)
 end
 
 function mainMenu()
+	header("Developer")
+	simpleButton("Bash",showPrompt)
 	for i, plugin in pairs(plugins) do
 		plugin.uiHandler(stateName,stateData)
 	end
 end
 
 function mainUpdate() 	
+	-- set screen scale
+	--playdate.display.setScale(2)
+
+	SCREEN_WIDTH = playdate.display.getWidth()
+	SCREEN_HEIGHT = playdate.display.getHeight()
+
+	BUTTON_HEIGHT = 36 - (3 * playdate.display.getScale())
+	EDGE_PADDING = 50 - (20 * playdate.display.getScale())
+
 	playdate.display.setInverted(useDarkMode)
-	playdate.downButtonDown = function ()
+	actionDownHandler = function ()
 		hoverIndex = hoverIndex + 1
 		selectionBump = 10
 		snd.playSystemSound(snd.kSoundSelectNext)
 	end
-	playdate.upButtonDown = function ()
+	actionUpHandler = function ()
 		hoverIndex = hoverIndex - 1
 		selectionBump = -10
 		snd.playSystemSound(snd.kSoundSelectPrevious)
 	end
 
-	playdate.AButtonDown = nil
-	playdate.BButtonDown = nil
-	playdate.leftButtonDown = nil
-	playdate.rightButtonDown = nil	
+	if queuedTask ~= nil then
+		queuedTask()
+		queuedTask = nil
+	end
+
+	actionAHandler = nil
+	actionBHandler = nil
+	actionLeftHandler = nil
+	actionRightHandler = nil	
 
 	currentAllocationHeight = EDGE_PADDING
 	currentTime = playdate.getCurrentTimeMilliseconds() / 1000
@@ -164,11 +264,11 @@ function mainUpdate()
 	ticks = playdate.getCrankTicks(6)
 
 	if ticks > 0 then
-		playdate.downButtonDown()
+		actionDownHandler()
 	end
 
 	if ticks < 0 then
-		playdate.upButtonDown()
+		actionUpHandler()
 	end
 
 	if bPaint > 0 then
@@ -253,7 +353,7 @@ function simpleTickbox(text,get,set)
 	tickMargin = 5
 	playdate.graphics.fillRoundRect(rect.left, rect.top + tickMargin,tickSize,tickSize,2)
 	if value then
-		tickboxTexture:draw(rect.left, rect.top + tickMargin)
+		icons.check:draw(rect.left, rect.top + tickMargin)
 	end
 	playdate.graphics.drawText("*" .. text .. "*",rect.left + tickSize + tickMargin + tickMargin,rect.top+9)
 end
@@ -328,25 +428,25 @@ function selectionGetter(rct,actions,cornerRadius)
 		selectionRadius = lerp(selectionRadius, cornerRadius, deltaTime * 10);
 
 		if actions.select ~= nil then
-			playdate.AButtonDown = function ()
+			actionAHandler = function ()
 				snd.playSystemSound(snd.kSoundAction)
 				actions.select()
 			end
 		end
 		if actions.cancel ~= nil then
-			playdate.BButtonDown = actions.cancel
+			actionBHandler = actions.cancel
 		end
 		if actions.up ~= nil then
-			playdate.upButtonDown = actions.up
+			actionUpHandler = actions.up
 		end
 		if actions.down ~= nil then
-			playdate.downButtonDown = actions.down
+			actionDownHandler = actions.down
 		end
 		if actions.left ~= nil then
-			playdate.leftButtonDown = actions.left
+			actionLeftHandler = actions.left
 		end
 		if actions.right ~= nil then
-			playdate.rightButtonDown = actions.right
+			actionRightHandler = actions.right
 		end
 	end
 	if lastScrollY ~= scrollY then
